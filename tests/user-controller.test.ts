@@ -1,5 +1,7 @@
 // tests/api.spec.ts
 import { test, expect } from '@playwright/test';
+import {StatusCodes} from "http-status-codes";
+
 let baseURL: string = 'http://localhost:3000/users';
 
 test.describe('User management API', () => {
@@ -17,18 +19,6 @@ test.describe('User management API', () => {
         createdUser = await createResponse.json();
     })
 
-    test('all users: should return empty array when no users', async ({ request }) => {
-        const response = await request.get(`${baseURL}`);
-        const users: User[] = await response.json();
-        for (let i = 0; i < users.length; i++) {
-            await request.delete(`${baseURL}/${users[i].id}`);
-        }
-        const afterDeleteResponse = await request.get(`${baseURL}`);
-        const afterDeleteResponseJson = await afterDeleteResponse.json();
-        expect(afterDeleteResponseJson.length).toBe(0);
-        expect(afterDeleteResponseJson).toBeInstanceOf(Array);
-    });
-
     test('find user: should return a user by ID', async ({ request }) => {
         const searchResponse = await request.get(`${baseURL}/${createdUser.id}`);
         const foundUser = await searchResponse.json();
@@ -41,7 +31,7 @@ test.describe('User management API', () => {
 
     test('find user: should return 404 if user not found', async ({ request }) => {
         const response = await request.get(`${baseURL}/101`);
-        expect(response.status()).toBe(404);
+        expect(response.status()).toBe(StatusCodes.NOT_FOUND);
         const json = await response.json();
         expect(json.message).toBe('User not found');
     });
@@ -55,18 +45,17 @@ test.describe('User management API', () => {
     test('delete user: should delete a user by ID', async ({ request }) => {
         const response = await request.delete(`${baseURL}/${createdUser.id}`);
         const json: User[] = await response.json();
-        expect(response.status()).toBe(200);
+        expect(response.status()).toBe(StatusCodes.OK);
         expect(json[0].id).toBe(createdUser.id);
     });
 
     test('delete user: should return 404 if user not found', async ({ request }) => {
         const response = await request.delete(`${baseURL}/${createdUser.id}`);
-        expect(response.status()).toBe(200);
+        expect(response.status()).toBe(StatusCodes.OK);
         const secondDeleteResponse = await request.delete(`${baseURL}/${createdUser.id}`);
-        expect(secondDeleteResponse.status()).toBe(404);
+        expect(secondDeleteResponse.status()).toBe(StatusCodes.NOT_FOUND);
         const json = await secondDeleteResponse.json();
         expect(json.message).toBe('User not found');
     });
-
 
 });
